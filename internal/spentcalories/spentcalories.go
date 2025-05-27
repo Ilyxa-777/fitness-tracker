@@ -1,6 +1,9 @@
 package spentcalories
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -13,26 +16,125 @@ const (
 	walkingCaloriesCoefficient = 0.5  // коэффициент для расчета калорий при ходьбе
 )
 
+// parseTraining парсит строку данных активности и возвращает количество шагов, тип активности и продолжительность активности.
 func parseTraining(data string) (int, string, time.Duration, error) {
-	// TODO: реализовать функцию
+	ds := strings.Split(data, ",")
+	if len(ds) != 3 {
+		return 0, "", 0, fmt.Errorf("неверный формат данных")
+	}
+
+	activityType := ds[1]
+
+	if !(activityType == "Бег" || activityType == "Ходьба") {
+		return 0, activityType, 0, fmt.Errorf("неизвестный тип тренировки")
+	}
+
+	steps, err := strconv.Atoi(ds[0])
+	if err != nil {
+		return 0, activityType, 0, fmt.Errorf("неверный формат данных - шаги")
+	}
+
+	duration, err := time.ParseDuration(ds[2])
+	if err != nil {
+		return 0, activityType, 0, fmt.Errorf("неверный формат данных - продолжительность активности")
+	}
+
+	if steps <= 0 {
+		return 0, activityType, 0, fmt.Errorf("количество шагов не может быть отрицательным")
+	}
+
+	if duration <= 0 {
+		return 0, activityType, 0, fmt.Errorf("продолжительность активности не может быть отрицательной")
+	}
+
+	return steps, activityType, duration, nil
+
 }
 
+// distance рассчитывает дистанцию, пройденную за тренировку.
 func distance(steps int, height float64) float64 {
-	// TODO: реализовать функцию
+	stepLength := stepLengthCoefficient * height
+	distance := float64(steps) * stepLength
+	distanceInKm := distance / mInKm
+	return distanceInKm
 }
 
+// meanSpeed рассчитывает среднюю скорость, с которой была пройдена дистанция.
 func meanSpeed(steps int, height float64, duration time.Duration) float64 {
-	// TODO: реализовать функцию
+	if duration <= 0 {
+		return 0
+	}
+
+	distance := distance(steps, height)
+	meanSpeed := distance / duration.Hours()
+	return meanSpeed
 }
 
+// возвращает данные тренировки
 func TrainingInfo(data string, weight, height float64) (string, error) {
-	// TODO: реализовать функцию
+	// TODO: установить точку остановки на следующей строке
+	steps, activityType, duration, err := parseTraining(data)
+	if err != nil {
+		return "", err
+	}
+
+	var calories float64
+	var errCal error
+
+	switch activityType {
+	case "Бег":
+		calories, errCal = RunningSpentCalories(steps, weight, height, duration)
+	case "Ходьба":
+		calories, errCal = WalkingSpentCalories(steps, weight, height, duration)
+	default:
+		return "", fmt.Errorf("неизвестный тип тренировки")
+	}
+
+	if errCal != nil {
+		return "", errCal
+	}
+
+	distance := distance(steps, height)
+	speed := meanSpeed(steps, height, duration)
+
+	return fmt.Sprintf("Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nСожгли калорий: %.2f\n",
+		activityType, duration.Hours(), distance, speed, calories), nil
 }
 
+// RunningSpentCalories рассчитывает количество сожженных калорий при беге.
 func RunningSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
-	// TODO: реализовать функцию
+	if duration <= 0 {
+		return 0, fmt.Errorf("продолжительность активности не может быть отрицательной или 0")
+	}
+
+	if steps <= 0 {
+		return 0, fmt.Errorf("количество шагов не может быть отрицательным или 0")
+	}
+
+	if weight <= 0 {
+		return 0, fmt.Errorf("вес не может быть отрицательным или равным нулю")
+	}
+
+	if height <= 0 {
+		return 0, fmt.Errorf("рост не может быть отрицательным или равным нулю")
+	}
+
+	meanSpeed := meanSpeed(steps, height, duration)
+	durationInMinutes := duration.Minutes()
+
+	calories := (weight * meanSpeed * durationInMinutes) / minInH
+
+	return calories, nil
 }
 
+// WalkingSpentCalories рассчитывает количество сожженных калорий при ходьбе.
 func WalkingSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
-	// TODO: реализовать функцию
+	runningCalories, err := RunningSpentCalories(steps, weight, height, duration)
+	if err != nil {
+		return .0, err
+	}
+
+	walkingCalories := runningCalories * walkingCaloriesCoefficient
+
+	return walkingCalories, nil
 }
