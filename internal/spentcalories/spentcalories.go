@@ -26,7 +26,7 @@ func parseTraining(data string) (int, string, time.Duration, error) {
 	activityType := ds[1]
 
 	if !(activityType == "Бег" || activityType == "Ходьба") {
-		return 0, activityType, 0, fmt.Errorf("unknown training type")
+		return 0, activityType, 0, fmt.Errorf("неизвестный тип тренировки")
 	}
 
 	steps, err := strconv.Atoi(ds[0])
