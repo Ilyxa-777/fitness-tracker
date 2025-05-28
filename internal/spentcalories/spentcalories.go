@@ -20,31 +20,31 @@ const (
 func parseTraining(data string) (int, string, time.Duration, error) {
 	ds := strings.Split(data, ",")
 	if len(ds) != 3 {
-		return 0, "", 0, fmt.Errorf("неверный формат данных")
+		return 0, "", 0, fmt.Errorf("invalid data format")
 	}
 
 	activityType := ds[1]
 
 	if !(activityType == "Бег" || activityType == "Ходьба") {
-		return 0, activityType, 0, fmt.Errorf("неизвестный тип тренировки")
+		return 0, activityType, 0, fmt.Errorf("unknown training type")
 	}
 
 	steps, err := strconv.Atoi(ds[0])
 	if err != nil {
-		return 0, activityType, 0, fmt.Errorf("неверный формат данных - шаги")
+		return 0, activityType, 0, err
 	}
 
 	duration, err := time.ParseDuration(ds[2])
 	if err != nil {
-		return 0, activityType, 0, fmt.Errorf("неверный формат данных - продолжительность активности")
+		return 0, activityType, 0, err
 	}
 
 	if steps <= 0 {
-		return 0, activityType, 0, fmt.Errorf("количество шагов не может быть отрицательным")
+		return 0, activityType, 0, fmt.Errorf("number of steps cannot be negative")
 	}
 
 	if duration <= 0 {
-		return 0, activityType, 0, fmt.Errorf("продолжительность активности не может быть отрицательной")
+		return 0, activityType, 0, fmt.Errorf("activity duration cannot be negative")
 	}
 
 	return steps, activityType, duration, nil
@@ -87,7 +87,7 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 	case "Ходьба":
 		calories, errCal = WalkingSpentCalories(steps, weight, height, duration)
 	default:
-		return "", fmt.Errorf("неизвестный тип тренировки")
+		return "", fmt.Errorf("unknown training type")
 	}
 
 	if errCal != nil {
@@ -104,19 +104,19 @@ func TrainingInfo(data string, weight, height float64) (string, error) {
 // RunningSpentCalories рассчитывает количество сожженных калорий при беге.
 func RunningSpentCalories(steps int, weight, height float64, duration time.Duration) (float64, error) {
 	if duration <= 0 {
-		return 0, fmt.Errorf("продолжительность активности не может быть отрицательной или 0")
+		return 0, fmt.Errorf("activity duration cannot be negative or zero")
 	}
 
 	if steps <= 0 {
-		return 0, fmt.Errorf("количество шагов не может быть отрицательным или 0")
+		return 0, fmt.Errorf("number of steps cannot be negative or zero")
 	}
 
 	if weight <= 0 {
-		return 0, fmt.Errorf("вес не может быть отрицательным или равным нулю")
+		return 0, fmt.Errorf("weight cannot be negative or zero")
 	}
 
 	if height <= 0 {
-		return 0, fmt.Errorf("рост не может быть отрицательным или равным нулю")
+		return 0, fmt.Errorf("height cannot be negative or zero")
 	}
 
 	meanSpeed := meanSpeed(steps, height, duration)

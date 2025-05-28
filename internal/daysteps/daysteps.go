@@ -23,25 +23,25 @@ func parsePackage(data string) (int, time.Duration, error) {
 	ds := strings.Split(data, ",")
 
 	if len(ds) != 2 {
-		return 0, 0, fmt.Errorf("неверный формат данных активности")
+		return 0, 0, fmt.Errorf("invalid activity data format")
 	}
 
 	steps, err := strconv.Atoi(ds[0])
 	if err != nil {
-		return 0, 0, fmt.Errorf("неверный формат шагов")
+		return 0, 0, err
 	}
 
 	if steps <= 0 {
-		return 0, 0, fmt.Errorf("количество шагов не может быть отрицательным")
+		return 0, 0, fmt.Errorf("number of steps cannot be negative")
 	}
 
 	duration, err := time.ParseDuration(ds[1])
 	if err != nil {
-		return 0, 0, fmt.Errorf("неверный формат продолжительности активности")
+		return 0, 0, err
 	}
 
 	if duration <= 0 {
-		return 0, 0, fmt.Errorf("Время не может быть отрицательным")
+		return 0, 0, fmt.Errorf("time cannot be negative")
 	}
 
 	return steps, duration, nil
